@@ -1,6 +1,7 @@
 /*
  * IJKSDLAudioQueueController.m
  *
+ * Copyright (c) 2013-2014 Bilibili
  * Copyright (c) 2013-2014 Zhang Rui <bbcallen@gmail.com>
  *
  * based on https://github.com/kolyvan/kxmovie
@@ -24,6 +25,7 @@
 
 #import "IJKSDLAudioQueueController.h"
 #import "IJKSDLAudioKit.h"
+#import "ijksdl_log.h"
 
 #import <AVFoundation/AVFoundation.h>
 
@@ -54,7 +56,7 @@
             return nil;
         }
 
-        if (aSpec->channels > 6) {
+        if (aSpec->channels > 2) {
             NSLog(@"aout_open_audio: unsupported channels %d\n", (int)aSpec->channels);
             return nil;
         }
@@ -62,6 +64,13 @@
         /* Get the current format */
         AudioStreamBasicDescription streamDescription;
         IJKSDLGetAudioStreamBasicDescriptionFromSpec(&_spec, &streamDescription);
+
+        SDL_CalculateAudioSpec(&_spec);
+
+        if (_spec.size == 0) {
+            NSLog(@"aout_open_audio: unexcepted audio spec size %u", _spec.size);
+            return nil;
+        }
 
         /* Set the desired format */
         AudioQueueRef audioQueueRef;
@@ -85,15 +94,12 @@
         propValue = kAudioQueueTimePitchAlgorithm_Spectral;
         AudioQueueSetProperty(_audioQueueRef, kAudioQueueProperty_TimePitchAlgorithm, &propValue, sizeof(propValue));
 
-
         status = AudioQueueStart(audioQueueRef, NULL);
         if (status != noErr) {
             NSLog(@"AudioQueue: AudioQueueStart failed (%d)\n", (int)status);
             self = nil;
             return nil;
         }
-
-        SDL_CalculateAudioSpec(&_spec);
 
         _audioQueueRef = audioQueueRef;
 
@@ -104,7 +110,6 @@
             memset(_audioQueueBufferRefArray[i]->mAudioData, 0, _spec.size);
             AudioQueueEnqueueBuffer(audioQueueRef, _audioQueueBufferRefArray[i], 0, NULL);
         }
-
         /*-
         status = AudioQueueStart(audioQueueRef, NULL);
         if (status != noErr) {
@@ -130,6 +135,8 @@
 {
     if (!_audioQueueRef)
         return;
+
+    self.spec.callback(self.spec.userdata, NULL, 0);
 
     @synchronized(_lock) {
         _isPaused = NO;
@@ -207,6 +214,21 @@
         AudioQueueSetProperty(_audioQueueRef, kAudioQueueProperty_TimePitchBypass, &propValue, sizeof(propValue));
         AudioQueueSetParameter(_audioQueueRef, kAudioQueueParam_PlayRate, playbackRate);
     }
+}
+
+- (void)setPlaybackVolume:(float)playbackVolume
+{
+    float aq_volume = playbackVolume;
+    if (fabsf(aq_volume - 1.0f) <= 0.000001) {
+        AudioQueueSetParameter(_audioQueueRef, kAudioQueueParam_Volume, 1.f);
+    } else {
+        AudioQueueSetParameter(_audioQueueRef, kAudioQueueParam_Volume, aq_volume);
+    }
+}
+
+- (double)get_latency_seconds
+{
+    return ((double)(kIJKAudioQueueNumberBuffers)) * _spec.samples / _spec.freq;
 }
 
 static void IJKSDLAudioQueueOuptutCallback(void * inUserData, AudioQueueRef inAQ, AudioQueueBufferRef inBuffer) {

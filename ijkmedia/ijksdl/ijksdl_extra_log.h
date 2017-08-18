@@ -1,8 +1,9 @@
-/*
- * url.h
+/*****************************************************************************
+ * ijksdl_extra_log.h
+ *****************************************************************************
  *
- * Copyright (c) 2003 Fabrice Bellard
- * Copyright (c) 2013 Zhang Rui <bbcallen@gmail.com>
+ * Copyright (c) 2017 Bilibili
+ * copyright (c) 2017 Raymond Zheng <raymondzheng1412@gmail.com>
  *
  * This file is part of ijkPlayer.
  *
@@ -21,9 +22,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#ifndef FFPLAY__IJKAVFORMAT_URL_H
-#define FFPLAY__IJKAVFORMAT_URL_H
+#ifndef IJKSDL__IJKSDL_EXTRA_LOG_H
+#define IJKSDL__IJKSDL_EXTRA_LOG_H
 
-#include "libavformat/url.h"
+#ifdef __ANDROID__
+#include <android/log.h>
 
+void ffp_log_extra_print(int level, const char *tag, const char *fmt, ...);
+void ffp_log_extra_vprint(int level, const char *tag, const char *fmt, va_list ap);
 #endif
+
+#endif  // IJKSDL__IJKSDL_EXTRA_LOG_H

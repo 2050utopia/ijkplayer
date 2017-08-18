@@ -1,8 +1,8 @@
-/*
- * utils.c
+/*****************************************************************************
+ * IJKVideoToolBox.h
+ *****************************************************************************
  *
- * Copyright (c) 2003 Fabrice Bellard
- * Copyright (c) 2013 Zhang Rui <bbcallen@gmail.com>
+ * copyright (c) 2014 Zhou Quan <zhouqicy@gmail.com>
  *
  * This file is part of ijkPlayer.
  *
@@ -21,19 +21,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <stdlib.h>
-#include "ijkavformat.h"
+#ifndef IJKMediaPlayer_videotoolbox_sync_h
+#define IJKMediaPlayer_videotoolbox_sync_h
 
-static IjkAVInjectCallback s_av_inject_callback = NULL;
+#include "ff_ffplay.h"
 
-IjkAVInjectCallback ijkav_register_inject_callback(IjkAVInjectCallback callback)
-{
-    IjkAVInjectCallback prev_callback = s_av_inject_callback;
-    s_av_inject_callback = callback;
-    return prev_callback;
-}
+typedef struct Ijk_VideoToolBox_Opaque Ijk_VideoToolBox_Opaque;
 
-IjkAVInjectCallback ijkav_get_inject_callback()
-{
-    return s_av_inject_callback;
-}
+Ijk_VideoToolBox_Opaque* videotoolbox_sync_create(FFPlayer* ffp, AVCodecContext* ic);
+
+int videotoolbox_sync_decode_frame(Ijk_VideoToolBox_Opaque* opaque);
+
+void videotoolbox_sync_free(Ijk_VideoToolBox_Opaque* opaque);
+
+#endif
